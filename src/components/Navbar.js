@@ -9,7 +9,7 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="navbar-container">
         <Link to="/" className="navbar-brand">
-          🏎️ AgentTony F1 Payaluga Daa
+          🏎️ AgentTony Sports Hub
         </Link>
         
         <div className="navbar-menu">
@@ -23,7 +23,19 @@ const Navbar = () => {
             to="/f1" 
             className={`navbar-item ${location.pathname === '/f1' ? 'active' : ''}`}
           >
-            F1 Races
+            🏎️ F1 Races
+          </Link>
+          <Link 
+            to="/basketball" 
+            className={`navbar-item ${location.pathname === '/basketball' ? 'active' : ''}`}
+          >
+            🏀 Basketball
+          </Link>
+          <Link 
+            to="/cricket" 
+            className={`navbar-item ${location.pathname === '/cricket' ? 'active' : ''}`}
+          >
+            🏏 Cricket
           </Link>
         </div>
       </div>

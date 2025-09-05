@@ -179,7 +179,14 @@ const F1MatchCard = ({ match, isLive = false }) => {
             )}
             {isUpcoming && (
               <span className="upcoming-status">
-                📅 Starts {new Date(match.date).toLocaleTimeString()}
+                � {new Date(match.date).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric'
+                })} at {new Date(match.date).toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true
+                })}
               </span>
             )}
           </div>
@@ -192,9 +199,17 @@ const F1MatchCard = ({ match, isLive = false }) => {
             {match.teams.home && (
               <div className="team">
                 <div className="team-badge-placeholder">
-                  {match.teams.home.name.charAt(0)}
+                  {typeof match.teams.home === 'string' 
+                    ? match.teams.home.charAt(0) 
+                    : (match.teams.home.name ? match.teams.home.name.charAt(0) : 'T')
+                  }
                 </div>
-                <span className="team-name">{match.teams.home.name}</span>
+                <span className="team-name">
+                  {typeof match.teams.home === 'string' 
+                    ? match.teams.home 
+                    : (match.teams.home.name || 'Team')
+                  }
+                </span>
               </div>
             )}
             
@@ -207,9 +222,17 @@ const F1MatchCard = ({ match, isLive = false }) => {
             {match.teams.away && (
               <div className="team">
                 <div className="team-badge-placeholder">
-                  {match.teams.away.name.charAt(0)}
+                  {typeof match.teams.away === 'string' 
+                    ? match.teams.away.charAt(0) 
+                    : (match.teams.away.name ? match.teams.away.name.charAt(0) : 'T')
+                  }
                 </div>
-                <span className="team-name">{match.teams.away.name}</span>
+                <span className="team-name">
+                  {typeof match.teams.away === 'string' 
+                    ? match.teams.away 
+                    : (match.teams.away.name || 'Team')
+                  }
+                </span>
               </div>
             )}
           </div>

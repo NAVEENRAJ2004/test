@@ -262,8 +262,8 @@ class StreamedAPI {
         popular: true,
         status: 'upcoming',
         teams: {
-          home: { name: 'Max Verstappen', badge: null },
-          away: { name: 'Charles Leclerc', badge: null }
+          home: { name: 'Red Bull Racing', badge: null },
+          away: { name: 'Ferrari', badge: null }
         },
         sources: [
           { source: 'charlie', id: 'italian-gp-qualifying' }
@@ -278,8 +278,8 @@ class StreamedAPI {
         popular: true,
         status: 'upcoming',
         teams: {
-          home: { name: 'Lando Norris', badge: null },
-          away: { name: 'Oscar Piastri', badge: null }
+          home: { name: 'McLaren', badge: null },
+          away: { name: 'Aston Martin', badge: null }
         },
         sources: [
           { source: 'charlie', id: 'singapore-gp-race' }
@@ -294,8 +294,8 @@ class StreamedAPI {
         popular: false,
         status: 'upcoming',
         teams: {
-          home: { name: 'Lewis Hamilton', badge: null },
-          away: { name: 'George Russell', badge: null }
+          home: { name: 'Mercedes AMG', badge: null },
+          away: { name: 'Alpine', badge: null }
         },
         sources: [
           { source: 'charlie', id: 'japanese-gp-fp1' }
@@ -339,6 +339,455 @@ class StreamedAPI {
       console.error('Error fetching streams:', error);
       return [];
     }
+  }
+
+  // Basketball API Methods
+  
+  // Get all Basketball matches
+  async getBasketballMatches() {
+    try {
+      // First try to get live matches from API
+      const liveResponse = await fetch(`${BASE_URL}/matches/live`);
+      if (liveResponse.ok) {
+        const liveMatches = await liveResponse.json();
+        const basketballLive = liveMatches.filter(match => 
+          match.category === 'basketball' || 
+          match.category === 'nba' || 
+          match.category === 'wnba' ||
+          match.category === 'ncaa' ||
+          match.title.toLowerCase().includes('basketball') ||
+          match.title.toLowerCase().includes('nba') ||
+          match.title.toLowerCase().includes('wnba') ||
+          match.title.toLowerCase().includes('ncaa')
+        );
+        
+        if (basketballLive.length > 0) {
+          // Validate streams before returning
+          const validatedGames = await this.validateBasketballStreams(basketballLive);
+          if (validatedGames.length > 0) {
+            return validatedGames;
+          }
+        }
+      }
+      
+      // Fallback to sample live data
+      const sampleGames = this.getSampleLiveBasketball();
+      return await this.validateBasketballStreams(sampleGames);
+    } catch (error) {
+      console.error('Error fetching Basketball matches:', error);
+      // Return sample data without validation as fallback
+      return this.getSampleLiveBasketball();
+    }
+  }
+
+  // Get live Basketball matches with stream validation
+  async getLiveBasketballMatches() {
+    try {
+      const response = await fetch(`${BASE_URL}/matches/live`);
+      if (!response.ok) {
+        const sampleGames = this.getSampleLiveBasketball();
+        return await this.validateBasketballStreams(sampleGames);
+      }
+      const allLive = await response.json();
+      // Filter for Basketball matches only
+      const basketballLive = allLive.filter(match => 
+        match.category === 'basketball' || 
+        match.category === 'nba' || 
+        match.category === 'wnba' ||
+        match.category === 'ncaa' ||
+        match.title.toLowerCase().includes('basketball') ||
+        match.title.toLowerCase().includes('nba') ||
+        match.title.toLowerCase().includes('wnba') ||
+        match.title.toLowerCase().includes('ncaa')
+      );
+      
+      if (basketballLive.length === 0) {
+        const sampleGames = this.getSampleLiveBasketball();
+        return await this.validateBasketballStreams(sampleGames);
+      }
+      
+      // Validate streams before returning
+      const validatedGames = await this.validateBasketballStreams(basketballLive);
+      if (validatedGames.length > 0) {
+        return validatedGames;
+      }
+      
+      // If no validated games, fall back to sample data
+      const sampleGames = this.getSampleLiveBasketball();
+      return await this.validateBasketballStreams(sampleGames);
+    } catch (error) {
+      console.error('Error fetching live Basketball matches:', error);
+      // Return sample data without validation as final fallback
+      return this.getSampleLiveBasketball();
+    }
+  }
+
+  // Get upcoming Basketball matches
+  async getUpcomingBasketballMatches() {
+    try {
+      // For now, return sample upcoming games
+      return this.getSampleUpcomingBasketball();
+    } catch (error) {
+      console.error('Error fetching upcoming Basketball matches:', error);
+      return this.getSampleUpcomingBasketball();
+    }
+  }
+
+  // Validate basketball streams
+  async validateBasketballStreams(games) {
+    const validatedGames = [];
+    
+    for (const game of games) {
+      if (!game.sources || game.sources.length === 0) {
+        continue; // Skip games without sources
+      }
+      
+      // Check if at least one source is working
+      let hasWorkingStream = false;
+      const workingSources = [];
+      
+      for (const source of game.sources) {
+        const isAvailable = await this.checkStreamAvailability(source.source, source.id);
+        if (isAvailable) {
+          hasWorkingStream = true;
+          workingSources.push(source);
+        }
+      }
+      
+      // Only include games with working streams
+      if (hasWorkingStream) {
+        validatedGames.push({
+          ...game,
+          sources: workingSources // Only include working sources
+        });
+      }
+    }
+    
+    return validatedGames;
+  }
+
+  // Get sample basketball data
+  getSampleBasketballData() {
+    return [
+      {
+        title: "Lakers vs Warriors - NBA Regular Season",
+        league: "NBA",
+        teams: {
+          home: "Los Angeles Lakers",
+          away: "Golden State Warriors"
+        },
+        time: "8:00 PM ET",
+        status: "live",
+        sources: [
+          { source: 'sports1', id: 'nba-lakers-warriors-live' },
+          { source: 'sports2', id: 'lakers-warriors-stream' }
+        ]
+      },
+      {
+        title: "Celtics vs Heat - NBA Eastern Conference",
+        league: "NBA",
+        teams: {
+          home: "Boston Celtics",
+          away: "Miami Heat"
+        },
+        time: "7:30 PM ET",
+        status: "live",
+        sources: [
+          { source: 'sports1', id: 'nba-celtics-heat-live' }
+        ]
+      },
+      {
+        title: "Nuggets vs Suns - NBA Western Conference",
+        league: "NBA",
+        teams: {
+          home: "Denver Nuggets",
+          away: "Phoenix Suns"
+        },
+        time: "9:00 PM ET",
+        status: "upcoming",
+        sources: [
+          { source: 'sports3', id: 'nba-nuggets-suns' }
+        ]
+      },
+      {
+        title: "Duke vs UNC - NCAA Basketball",
+        league: "NCAA",
+        teams: {
+          home: "Duke Blue Devils",
+          away: "UNC Tar Heels"
+        },
+        time: "6:00 PM ET",
+        status: "upcoming",
+        sources: [
+          { source: 'college1', id: 'ncaa-duke-unc' }
+        ]
+      },
+      {
+        title: "Aces vs Storm - WNBA Championship",
+        league: "WNBA",
+        teams: {
+          home: "Las Vegas Aces",
+          away: "Seattle Storm"
+        },
+        time: "8:00 PM ET",
+        status: "live",
+        sources: [
+          { source: 'wnba1', id: 'wnba-aces-storm-championship' }
+        ]
+      }
+    ];
+  }
+
+  // Get sample live basketball games only
+  getSampleLiveBasketball() {
+    const allGames = this.getSampleBasketballData();
+    return allGames.filter(game => game.status === 'live');
+  }
+
+  // Get sample upcoming basketball games
+  getSampleUpcomingBasketball() {
+    const allGames = this.getSampleBasketballData();
+    return allGames.filter(game => game.status === 'upcoming');
+  }
+
+  // Cricket API Methods
+  
+  // Get all Cricket matches
+  async getCricketMatches() {
+    try {
+      // First try to get live matches from API
+      const liveResponse = await fetch(`${BASE_URL}/matches/live`);
+      if (liveResponse.ok) {
+        const liveMatches = await liveResponse.json();
+        const cricketLive = liveMatches.filter(match => 
+          match.category === 'cricket' || 
+          match.category === 'ipl' || 
+          match.category === 'test' ||
+          match.category === 'odi' ||
+          match.category === 't20' ||
+          match.title.toLowerCase().includes('cricket') ||
+          match.title.toLowerCase().includes('ipl') ||
+          match.title.toLowerCase().includes('test') ||
+          match.title.toLowerCase().includes('odi') ||
+          match.title.toLowerCase().includes('t20')
+        );
+        
+        if (cricketLive.length > 0) {
+          // Validate streams before returning
+          const validatedMatches = await this.validateCricketStreams(cricketLive);
+          if (validatedMatches.length > 0) {
+            return validatedMatches;
+          }
+        }
+      }
+      
+      // Fallback to sample live data
+      const sampleMatches = this.getSampleLiveCricket();
+      return await this.validateCricketStreams(sampleMatches);
+    } catch (error) {
+      console.error('Error fetching Cricket matches:', error);
+      // Return sample data without validation as fallback
+      return this.getSampleLiveCricket();
+    }
+  }
+
+  // Get live Cricket matches with stream validation
+  async getLiveCricketMatches() {
+    try {
+      const response = await fetch(`${BASE_URL}/matches/live`);
+      if (!response.ok) {
+        const sampleMatches = this.getSampleLiveCricket();
+        return await this.validateCricketStreams(sampleMatches);
+      }
+      const allLive = await response.json();
+      // Filter for Cricket matches only
+      const cricketLive = allLive.filter(match => 
+        match.category === 'cricket' || 
+        match.category === 'ipl' || 
+        match.category === 'test' ||
+        match.category === 'odi' ||
+        match.category === 't20' ||
+        match.title.toLowerCase().includes('cricket') ||
+        match.title.toLowerCase().includes('ipl') ||
+        match.title.toLowerCase().includes('test') ||
+        match.title.toLowerCase().includes('odi') ||
+        match.title.toLowerCase().includes('t20')
+      );
+      
+      if (cricketLive.length === 0) {
+        const sampleMatches = this.getSampleLiveCricket();
+        return await this.validateCricketStreams(sampleMatches);
+      }
+      
+      // Validate streams before returning
+      const validatedMatches = await this.validateCricketStreams(cricketLive);
+      if (validatedMatches.length > 0) {
+        return validatedMatches;
+      }
+      
+      // If no validated matches, fall back to sample data
+      const sampleMatches = this.getSampleLiveCricket();
+      return await this.validateCricketStreams(sampleMatches);
+    } catch (error) {
+      console.error('Error fetching live Cricket matches:', error);
+      // Return sample data without validation as final fallback
+      return this.getSampleLiveCricket();
+    }
+  }
+
+  // Get upcoming Cricket matches
+  async getUpcomingCricketMatches() {
+    try {
+      // For now, return sample upcoming matches
+      return this.getSampleUpcomingCricket();
+    } catch (error) {
+      console.error('Error fetching upcoming Cricket matches:', error);
+      return this.getSampleUpcomingCricket();
+    }
+  }
+
+  // Validate cricket streams
+  async validateCricketStreams(matches) {
+    const validatedMatches = [];
+    
+    for (const match of matches) {
+      if (!match.sources || match.sources.length === 0) {
+        continue; // Skip matches without sources
+      }
+      
+      // Check if at least one source is working
+      let hasWorkingStream = false;
+      const workingSources = [];
+      
+      for (const source of match.sources) {
+        const isAvailable = await this.checkStreamAvailability(source.source, source.id);
+        if (isAvailable) {
+          hasWorkingStream = true;
+          workingSources.push(source);
+        }
+      }
+      
+      // Only include matches with working streams
+      if (hasWorkingStream) {
+        validatedMatches.push({
+          ...match,
+          sources: workingSources // Only include working sources
+        });
+      }
+    }
+    
+    return validatedMatches;
+  }
+
+  // Get sample cricket data with time information
+  getSampleCricketData() {
+    const now = new Date();
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const dayAfter = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+    
+    return [
+      {
+        title: "India vs Australia - 1st Test",
+        series: "Border-Gavaskar Trophy 2024",
+        format: "Test",
+        venue: "Adelaide Oval, Australia",
+        teams: {
+          team1: "India",
+          team2: "Australia"
+        },
+        score: {
+          home: "245/4 (85.2 overs)",
+          away: "180 all out"
+        },
+        time: now.toISOString(),
+        status: "live",
+        sources: [
+          { source: 'cricket1', id: 'ind-vs-aus-test1-live' },
+          { source: 'sports1', id: 'india-australia-test-adelaide' }
+        ]
+      },
+      {
+        title: "England vs Pakistan - 2nd ODI",
+        series: "Pakistan tour of England 2024",
+        format: "ODI",
+        venue: "Lord's, London",
+        teams: {
+          team1: "England",
+          team2: "Pakistan"
+        },
+        score: {
+          home: "287/8 (50 overs)",
+          away: "156/3 (28.4 overs)"
+        },
+        time: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+        status: "live",
+        sources: [
+          { source: 'cricket2', id: 'eng-vs-pak-odi2-live' }
+        ]
+      },
+      {
+        title: "Mumbai Indians vs Chennai Super Kings - IPL Final",
+        series: "Indian Premier League 2024",
+        format: "T20",
+        venue: "Wankhede Stadium, Mumbai",
+        teams: {
+          team1: "Mumbai Indians",
+          team2: "Chennai Super Kings"
+        },
+        time: tomorrow.setHours(19, 30, 0, 0), // Tomorrow 7:30 PM
+        status: "upcoming",
+        sources: [
+          { source: 'ipl1', id: 'mi-vs-csk-final' },
+          { source: 'cricket3', id: 'ipl-final-2024' }
+        ]
+      },
+      {
+        title: "South Africa vs New Zealand - T20I Series",
+        series: "New Zealand tour of South Africa 2024",
+        format: "T20I",
+        venue: "Centurion, South Africa",
+        teams: {
+          team1: "South Africa",
+          team2: "New Zealand"
+        },
+        time: dayAfter.setHours(16, 0, 0, 0), // Day after tomorrow 4:00 PM
+        status: "upcoming",
+        sources: [
+          { source: 'cricket4', id: 'sa-vs-nz-t20i' }
+        ]
+      },
+      {
+        title: "Bangladesh vs Sri Lanka - Asia Cup",
+        series: "Asia Cup 2024",
+        format: "ODI",
+        venue: "R.Premadasa Stadium, Colombo",
+        teams: {
+          team1: "Bangladesh",
+          team2: "Sri Lanka"
+        },
+        score: {
+          home: "278/9 (50 overs)",
+          away: "234/7 (45.2 overs)"
+        },
+        time: new Date(now.getTime() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
+        status: "live",
+        sources: [
+          { source: 'cricket5', id: 'ban-vs-sl-asia-cup' }
+        ]
+      }
+    ];
+  }
+
+  // Get sample live cricket matches only
+  getSampleLiveCricket() {
+    const allMatches = this.getSampleCricketData();
+    return allMatches.filter(match => match.status === 'live');
+  }
+
+  // Get sample upcoming cricket matches
+  getSampleUpcomingCricket() {
+    const allMatches = this.getSampleCricketData();
+    return allMatches.filter(match => match.status === 'upcoming');
   }
 
   // Get all available sports
