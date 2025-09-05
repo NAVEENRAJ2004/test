@@ -72,14 +72,6 @@ const F1Page = () => {
             Watch live F1 races and catch up on the latest Grand Prix events
           </p>
           
-          <div className="vpn-warning">
-            <div className="warning-icon">⚠️</div>
-            <div className="warning-content">
-              <strong>Important Notice:</strong> Some streams may not work with Indian ISPs. 
-              Please use a VPN for better access to streaming content.
-            </div>
-          </div>
-          
           <div className="filter-tabs">
             <button 
               className={`filter-tab ${filter === 'live' ? 'active' : ''}`}

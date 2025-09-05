@@ -79,8 +79,153 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.video-player.mobile {
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+}
+
+.video-player.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  border-radius: 0;
+  aspect-ratio: unset;
+}
+
 .video-player iframe {
   border-radius: 12px;
+}
+
+.video-player.fullscreen iframe {
+  border-radius: 0;
+}
+
+.fullscreen-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  width: 45px;
+  height: 45px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+
+.fullscreen-btn:hover {
+  background: rgba(0, 0, 0, 0.9);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: scale(1.05);
+}
+
+.fullscreen-btn:active {
+  transform: scale(0.95);
+}
+
+.mobile-play-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.9) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.mobile-play-overlay:hover {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.8) 100%);
+}
+
+.play-button {
+  text-align: center;
+  color: white;
+  animation: pulse 2s infinite;
+}
+
+.play-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #ff1744 0%, #d50000 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin: 0 auto 15px;
+  box-shadow: 0 10px 30px rgba(255, 23, 68, 0.4);
+}
+
+.play-button p {
+  font-size: 1.2rem;
+  margin: 0 0 5px 0;
+  font-weight: 600;
+}
+
+.play-button small {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.mobile-stream-notice {
+  background: rgba(33, 150, 243, 0.1);
+  border: 1px solid rgba(33, 150, 243, 0.3);
+  border-radius: 10px;
+  padding: 15px;
+  margin-top: 20px;
+}
+
+.notice-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.notice-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.notice-text {
+  color: #90caf9;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.notice-text strong {
+  color: #2196f3;
+}
+
+.retry-stream-btn {
+  background: linear-gradient(135deg, #ff1744 0%, #d50000 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 20px;
+  transition: all 0.3s ease;
+}
+
+.retry-stream-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 23, 68, 0.4);
 }
 
 .no-stream {
@@ -381,7 +526,9 @@
 
 @media (max-width: 768px) {
   .player-container {
+    grid-template-columns: 1fr;
     padding: 20px 15px;
+    gap: 20px;
   }
   
   .match-title-header h1 {
@@ -412,11 +559,40 @@
     width: 100%;
     max-width: 300px;
   }
+  
+  .video-player {
+    min-height: 250px;
+  }
+  
+  .mobile-stream-notice {
+    margin-top: 15px;
+    padding: 12px;
+  }
+  
+  .play-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+  }
+  
+  .play-button p {
+    font-size: 1rem;
+  }
+  
+  .fullscreen-btn {
+    width: 40px;
+    height: 40px;
+    top: 10px;
+    right: 10px;
+    font-size: 1rem;
+    border-radius: 6px;
+  }
 }
 
 @media (max-width: 480px) {
   .video-player {
     border-radius: 8px;
+    min-height: 200px;
   }
   
   .stream-details,
@@ -433,4 +609,224 @@
   .value {
     text-align: left;
   }
+  
+  .player-header {
+    padding: 15px 0;
+  }
+  
+  .match-title-header h1 {
+    font-size: 1.3rem;
+    line-height: 1.3;
+  }
+  
+  .mobile-stream-notice {
+    margin-top: 10px;
+    padding: 10px;
+  }
+  
+  .notice-content {
+    gap: 8px;
+  }
+  
+  .notice-text {
+    font-size: 0.8rem;
+  }
+  
+  .play-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+  }
+  
+  .play-button p {
+    font-size: 0.9rem;
+  }
+  
+  .play-button small {
+    font-size: 0.8rem;
+  }
+  
+  .fullscreen-btn {
+    width: 35px;
+    height: 35px;
+    top: 8px;
+    right: 8px;
+    font-size: 0.9rem;
+    border-radius: 4px;
+  }
+}
+
+/* Badge styles for enhanced stream information */
+.quality-badge {
+  background: linear-gradient(135deg, #2196F3, #1976D2);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+}
+
+.delay-badge {
+  background: linear-gradient(135deg, #FF9800, #F57C00);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(255, 152, 0, 0.3);
+}
+
+.source-badge {
+  background: linear-gradient(135deg, #9C27B0, #7B1FA2);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(156, 39, 176, 0.3);
+}
+
+.commentator-badge {
+  background: linear-gradient(135deg, #4CAF50, #388E3C);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+}
+
+.record-badge {
+  background: linear-gradient(135deg, #F44336, #D32F2F);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(244, 67, 54, 0.3);
+}
+
+.temp-badge {
+  background: linear-gradient(135deg, #FF5722, #E64A19);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(255, 87, 34, 0.3);
+}
+
+.session-badge {
+  background: linear-gradient(135deg, #607D8B, #455A64);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(96, 125, 139, 0.3);
+}
+
+.time-badge {
+  background: linear-gradient(135deg, #795548, #5D4037);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(121, 85, 72, 0.3);
+}
+
+.team-name-badge {
+  background: linear-gradient(135deg, #3F51B5, #303F9F);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 2px;
+  display: inline-block;
+  box-shadow: 0 2px 4px rgba(63, 81, 181, 0.3);
+}
+
+.driver-badge {
+  background: linear-gradient(135deg, #009688, #00796B);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+  margin: 2px;
+  display: inline-block;
+  box-shadow: 0 1px 3px rgba(0, 150, 136, 0.3);
+}
+
+.championship-badge {
+  background: linear-gradient(135deg, #FFD700, #FFA000);
+  color: #333;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(255, 193, 7, 0.4);
+}
+
+/* Enhanced sections styling */
+.circuit-info, .weather-info, .session-info, .championship-info {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 12px 0;
+}
+
+.circuit-info h4, .weather-info h4, .session-info h4, .championship-info h4 {
+  margin: 0 0 12px 0;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
+}
+
+.teams-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.team-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-width: 200px;
+}
+
+.drivers {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* Animations for badges */
+@keyframes badgeGlow {
+  0% { box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1); }
+  50% { box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2); }
+  100% { box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1); }
+}
+
+.quality-badge:hover, .record-badge:hover, .championship-badge:hover {
+  animation: badgeGlow 2s infinite;
 }

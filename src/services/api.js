@@ -2,6 +2,31 @@
 const BASE_URL = 'https://f1naveenraj.naveenrajultd.workers.dev/api';
 
 class StreamedAPI {
+  // Enhanced F1 filtering function with comprehensive keywords
+  isF1Match(match) {
+    return (
+      // Category checks
+      match.category === 'f1' || 
+      match.category === 'formula1' || 
+      match.category === 'formula-1' ||
+      match.category === 'formula one' ||
+      match.category === 'fia f1' ||
+      match.category === 'fia formula 1' ||
+      match.category === 'f1 world championship' ||
+      
+      // Title checks - general F1 terms
+      match.title.toLowerCase().includes('formula') ||
+      match.title.toLowerCase().includes('f1') ||
+      match.title.toLowerCase().includes('formula one') ||
+      match.title.toLowerCase().includes('fia f1') ||
+      match.title.toLowerCase().includes('fia formula 1') ||
+      match.title.toLowerCase().includes('grand prix') ||
+      match.title.toLowerCase().includes('gp ') ||   // with space to reduce false matches
+      match.title.toLowerCase().includes(' prix') // covers just "Prix"
+
+    );
+  }
+
   // Check if a stream URL is available (simplified version)
   async checkStreamAvailability(source, id) {
     try {
@@ -20,13 +45,7 @@ class StreamedAPI {
         return false;
       }
       
-      // For sample data, check if the source/id combination is valid
-      if (source === 'charlie' && id.includes('formula-1-pirelli-gran-premio-ditalia')) {
-        console.log(`✓ Validated working stream: ${source}/${id}`);
-        return true; // This is our known working stream
-      }
-      
-      // For other streams, we'll assume they're working if the API returns data
+      // For any streams, we'll assume they're working if the API returns data
       // In production, you'd implement actual stream URL checking here
       console.log(`✓ Stream data found for ${source}/${id}, assuming available`);
       return true;
@@ -70,39 +89,35 @@ class StreamedAPI {
     return validatedRaces;
   }
 
-  // Get all F1 matches - Only return live races with working streams
+  // Get all F1 matches - Only return real data from API
   async getF1Matches() {
     try {
-      // First try to get live matches from API
+      // Try to get live matches from API
       const liveResponse = await fetch(`${BASE_URL}/matches/live`);
       if (liveResponse.ok) {
         const liveMatches = await liveResponse.json();
-        const f1Live = liveMatches.filter(match => 
-          match.category === 'f1' || 
-          match.category === 'formula1' || 
-          match.category === 'formula-1' ||
-          match.title.toLowerCase().includes('formula') ||
-          match.title.toLowerCase().includes('f1') ||
-          match.title.toLowerCase().includes('grand prix') ||
-          match.title.toLowerCase().includes('gp')
-        );
+        const f1Live = liveMatches.filter(match => this.isF1Match(match));
         
         if (f1Live.length > 0) {
           // Validate streams before returning
           const validatedRaces = await this.validateRaceStreams(f1Live);
-          if (validatedRaces.length > 0) {
-            return validatedRaces;
-          }
+          return validatedRaces;
         }
       }
       
-      // Fallback to sample live data (but still validate)
-      const sampleRaces = this.getSampleLiveRaces();
-      return await this.validateRaceStreams(sampleRaces);
+      // If no live data, try upcoming matches
+      const upcomingResponse = await fetch(`${BASE_URL}/matches/upcoming`);
+      if (upcomingResponse.ok) {
+        const upcomingMatches = await upcomingResponse.json();
+        const f1Upcoming = upcomingMatches.filter(match => this.isF1Match(match));
+        
+        return f1Upcoming;
+      }
+      
+      return [];
     } catch (error) {
       console.error('Error fetching F1 matches:', error);
-      // Return sample data without validation as fallback
-      return this.getSampleLiveRaces();
+      return [];
     }
   }
 
@@ -111,39 +126,17 @@ class StreamedAPI {
     try {
       const response = await fetch(`${BASE_URL}/matches/live`);
       if (!response.ok) {
-        const sampleRaces = this.getSampleLiveRaces();
-        return await this.validateRaceStreams(sampleRaces);
+        return [];
       }
       const allLive = await response.json();
-      // Filter for F1 matches only
-      const f1Live = allLive.filter(match => 
-        match.category === 'f1' || 
-        match.category === 'formula1' || 
-        match.category === 'formula-1' ||
-        match.title.toLowerCase().includes('formula') ||
-        match.title.toLowerCase().includes('f1') ||
-        match.title.toLowerCase().includes('grand prix') ||
-        match.title.toLowerCase().includes('gp')
-      );
-      
-      if (f1Live.length === 0) {
-        const sampleRaces = this.getSampleLiveRaces();
-        return await this.validateRaceStreams(sampleRaces);
-      }
+      // Filter for F1 matches only using comprehensive filter
+      const f1Live = allLive.filter(match => this.isF1Match(match));
       
       // Validate streams before returning
-      const validatedRaces = await this.validateRaceStreams(f1Live);
-      if (validatedRaces.length > 0) {
-        return validatedRaces;
-      }
-      
-      // If no validated races, fall back to sample data
-      const sampleRaces = this.getSampleLiveRaces();
-      return await this.validateRaceStreams(sampleRaces);
+      return await this.validateRaceStreams(f1Live);
     } catch (error) {
       console.error('Error fetching live F1 matches:', error);
-      // Return sample data without validation as final fallback
-      return this.getSampleLiveRaces();
+      return [];
     }
   }
 
@@ -154,14 +147,7 @@ class StreamedAPI {
       const response = await fetch(`${BASE_URL}/matches/all-today`);
       if (response.ok) {
         const todayMatches = await response.json();
-        const f1Today = todayMatches.filter(match => 
-          match.category === 'f1' || 
-          match.category === 'formula1' || 
-          match.title.toLowerCase().includes('formula') ||
-          match.title.toLowerCase().includes('f1') ||
-          match.title.toLowerCase().includes('grand prix') ||
-          match.title.toLowerCase().includes('gp')
-        );
+        const f1Today = todayMatches.filter(match => this.isF1Match(match));
         
         if (f1Today.length > 0) {
           return f1Today;
@@ -185,22 +171,10 @@ class StreamedAPI {
         // If f1 category doesn't exist, try getting all matches and filter
         const allResponse = await fetch(`${BASE_URL}/matches/all`);
         if (!allResponse.ok) {
-          // If all else fails, return sample F1 data
-          return this.getSampleF1Data();
+          return [];
         }
         const allMatches = await allResponse.json();
-        const f1Matches = allMatches.filter(match => 
-          match.category === 'f1' || 
-          match.category === 'formula1' || 
-          match.title.toLowerCase().includes('formula') ||
-          match.title.toLowerCase().includes('f1') ||
-          match.title.toLowerCase().includes('grand prix') ||
-          match.title.toLowerCase().includes('gp')
-        );
-        
-        if (f1Matches.length === 0) {
-          return this.getSampleF1Data();
-        }
+        const f1Matches = allMatches.filter(match => this.isF1Match(match));
         
         return f1Matches.slice(0, 6); // Limit to 6 recent matches
       }
@@ -208,11 +182,11 @@ class StreamedAPI {
       return f1Matches.slice(0, 6); // Limit to 6 recent matches
     } catch (error) {
       console.error('Error fetching recent F1 matches:', error);
-      return this.getSampleF1Data();
+      return [];
     }
   }
 
-  // Sample F1 data for demonstration - Live and Upcoming Races
+  // Sample F1 data for demonstration - Enhanced Motorsport Data
   getSampleF1Data() {
     const now = Date.now();
     const oneHour = 60 * 60 * 1000;
@@ -222,51 +196,147 @@ class StreamedAPI {
       // Live races
       {
         id: 'live-f1-1',
-        title: 'FIA F1 World Championship: FORMULA 1 Pirelli Gran Premio d\'Italia : Friday practice 2',
+        title: 'FIA F1 World Championship: Italian Grand Prix - Free Practice 2',
         category: 'f1',
         date: now - (30 * 60 * 1000), // Started 30 minutes ago
         poster: null,
         popular: true,
         status: 'live',
+        circuit: {
+          name: 'Autodromo Nazionale Monza',
+          location: 'Monza, Italy',
+          length: '5.793 km',
+          laps: 53,
+          lapRecord: '1:21.046 (Lewis Hamilton, 2020)'
+        },
+        weather: {
+          condition: 'Sunny',
+          temperature: '24°C',
+          humidity: '45%',
+          windSpeed: '8 km/h'
+        },
+        session: {
+          type: 'Free Practice 2',
+          duration: '90 minutes',
+          timeRemaining: '45 minutes'
+        },
         teams: {
           home: { name: 'Ferrari', badge: null },
           away: { name: 'Red Bull Racing', badge: null }
         },
         sources: [
-          { source: 'charlie', id: 'formula-1-pirelli-gran-premio-ditalia-friday-practice-2-10294f60247' }
+          { 
+            source: 'charlie', 
+            id: 'formula-1-pirelli-gran-premio-ditalia-friday-practice-2-10294f60247',
+            quality: 'HD 1080p',
+            language: 'English',
+            commentators: 'Martin Brundle, David Croft',
+            delay: 'Live',
+            region: 'International'
+          },
+          {
+            source: 'stream2',
+            id: 'f1-italia-fp2-alt',
+            quality: 'HD 720p',
+            language: 'Italian',
+            commentators: 'Carlo Vanzini, Marc Genè',
+            delay: '30 seconds',
+            region: 'Italy'
+          }
         ]
       },
       {
         id: 'live-f1-2',
-        title: 'F1 Practice Session - Singapore GP - LIVE',
+        title: 'Formula 1 Singapore Grand Prix - Qualifying Session',
         category: 'f1',
         date: now - (15 * 60 * 1000), // Started 15 minutes ago
         poster: null,
         popular: false,
         status: 'live',
+        circuit: {
+          name: 'Marina Bay Street Circuit',
+          location: 'Singapore',
+          length: '5.063 km',
+          laps: 61,
+          lapRecord: '1:35.867 (Lewis Hamilton, 2023)'
+        },
+        weather: {
+          condition: 'Night Race',
+          temperature: '28°C',
+          humidity: '75%',
+          windSpeed: '12 km/h'
+        },
+        session: {
+          type: 'Qualifying',
+          duration: '60 minutes',
+          timeRemaining: '35 minutes'
+        },
         teams: {
           home: { name: 'Mercedes AMG', badge: null },
           away: { name: 'McLaren', badge: null }
         },
         sources: [
-          { source: 'charlie', id: 'singapore-practice-live' }
+          { 
+            source: 'stream1', 
+            id: 'singapore-qualifying-live',
+            quality: 'UHD 4K',
+            language: 'English',
+            commentators: 'Martin Brundle, Ted Kravitz',
+            delay: 'Live',
+            region: 'Global'
+          }
         ]
       },
       // Upcoming races
       {
         id: 'upcoming-f1-1',
-        title: 'F1 Qualifying Session - Italian GP',
+        title: 'Formula 1 Italian Grand Prix - Race Day',
         category: 'f1',
         date: now + (2 * oneHour), // In 2 hours
         poster: null,
         popular: true,
         status: 'upcoming',
+        circuit: {
+          name: 'Autodromo Nazionale Monza',
+          location: 'Monza, Italy',
+          length: '5.793 km',
+          laps: 53,
+          lapRecord: '1:21.046 (Lewis Hamilton, 2020)'
+        },
+        weather: {
+          condition: 'Partly Cloudy',
+          temperature: '26°C',
+          humidity: '50%',
+          windSpeed: '10 km/h'
+        },
+        session: {
+          type: 'Grand Prix Race',
+          duration: '2 hours maximum',
+          timeRemaining: 'Starts in 2 hours'
+        },
         teams: {
           home: { name: 'Red Bull Racing', badge: null },
           away: { name: 'Ferrari', badge: null }
         },
         sources: [
-          { source: 'charlie', id: 'italian-gp-qualifying' }
+          { 
+            source: 'charlie', 
+            id: 'italian-gp-race',
+            quality: 'UHD 4K',
+            language: 'English',
+            commentators: 'Martin Brundle, David Croft, Karun Chandhok',
+            delay: 'Live',
+            region: 'International'
+          },
+          {
+            source: 'stream3',
+            id: 'italia-gp-sky',
+            quality: 'HD 1080p',
+            language: 'Italian',
+            commentators: 'Carlo Vanzini, Davide Valsecchi',
+            delay: 'Live',
+            region: 'Italy'
+          }
         ]
       },
       {
@@ -277,28 +347,80 @@ class StreamedAPI {
         poster: null,
         popular: true,
         status: 'upcoming',
+        circuit: {
+          name: 'Marina Bay Street Circuit',
+          location: 'Singapore',
+          length: '5.063 km',
+          laps: 61,
+          lapRecord: '1:35.867 (Lewis Hamilton, 2023)'
+        },
+        weather: {
+          condition: 'Night Race',
+          temperature: '29°C',
+          humidity: '80%',
+          windSpeed: '8 km/h'
+        },
+        session: {
+          type: 'Grand Prix Race',
+          duration: '2 hours maximum',
+          timeRemaining: 'Starts tomorrow'
+        },
         teams: {
           home: { name: 'McLaren', badge: null },
           away: { name: 'Aston Martin', badge: null }
         },
         sources: [
-          { source: 'charlie', id: 'singapore-gp-race' }
+          { 
+            source: 'charlie', 
+            id: 'singapore-gp-race',
+            quality: 'UHD 4K',
+            language: 'English',
+            commentators: 'Martin Brundle, David Croft, Jenson Button',
+            delay: 'Live',
+            region: 'Global'
+          }
         ]
       },
       {
         id: 'upcoming-f1-3',
-        title: 'F1 Practice - Japanese GP FP1',
+        title: 'Formula 1 Japanese Grand Prix - Free Practice 1',
         category: 'f1',
         date: now + (2 * oneDay), // Day after tomorrow
         poster: null,
         popular: false,
         status: 'upcoming',
+        circuit: {
+          name: 'Suzuka International Racing Course',
+          location: 'Suzuka, Japan',
+          length: '5.807 km',
+          laps: 53,
+          lapRecord: '1:30.983 (Lewis Hamilton, 2019)'
+        },
+        weather: {
+          condition: 'Overcast',
+          temperature: '22°C',
+          humidity: '65%',
+          windSpeed: '15 km/h'
+        },
+        session: {
+          type: 'Free Practice 1',
+          duration: '90 minutes',
+          timeRemaining: 'Starts in 2 days'
+        },
         teams: {
           home: { name: 'Mercedes AMG', badge: null },
           away: { name: 'Alpine', badge: null }
         },
         sources: [
-          { source: 'charlie', id: 'japanese-gp-fp1' }
+          { 
+            source: 'charlie', 
+            id: 'japanese-gp-fp1',
+            quality: 'HD 1080p',
+            language: 'English',
+            commentators: 'Martin Brundle, Alex Jacques',
+            delay: 'Live',
+            region: 'Asia-Pacific'
+          }
         ]
       }
     ];
@@ -313,18 +435,19 @@ class StreamedAPI {
   // Get upcoming F1 matches
   async getUpcomingF1Matches() {
     try {
-      // For now, return sample upcoming races
-      return this.getSampleUpcomingRaces();
+      const response = await fetch(`${BASE_URL}/matches/upcoming`);
+      if (!response.ok) {
+        return [];
+      }
+      const allUpcoming = await response.json();
+      // Filter for F1 matches only using comprehensive filter
+      const f1Upcoming = allUpcoming.filter(match => this.isF1Match(match));
+      
+      return f1Upcoming;
     } catch (error) {
       console.error('Error fetching upcoming F1 matches:', error);
-      return this.getSampleUpcomingRaces();
+      return [];
     }
-  }
-
-  // Get sample upcoming races
-  getSampleUpcomingRaces() {
-    const allRaces = this.getSampleF1Data();
-    return allRaces.filter(race => race.status === 'upcoming');
   }
 
   // Get streams for a specific match

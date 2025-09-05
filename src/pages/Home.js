@@ -56,18 +56,11 @@ const Home = () => {
       <div className="hero-section">
         <div className="hero-content">
           <h1 className="hero-title">
-            🏎️ AgentTony F1 Payaluga Daa
+            🏎️ Formula 1 & Motorsports Hub
           </h1>
           <p className="hero-subtitle">
-            Your Ultimate Formula 1 Streaming Destination
+            Your Ultimate Formula 1 & Motorsports Streaming Destination
           </p>
-          
-          <div className="vpn-warning-home">
-            <div className="warning-icon">⚠️</div>
-            <div className="warning-text">
-              <strong>Indian Users:</strong> Some streams may not work with local ISPs. Use VPN for better access.
-            </div>
-          </div>
           
           <div className="hero-stats">
             <div className="stat">
@@ -211,10 +204,6 @@ const MatchCard = ({ match, isLive = false }) => {
             </span>
           )}
         </div>
-      </div>
-      
-      <div className="vpn-notice">
-        ⚠️ Use VPN if streams don't work in India
       </div>
     </div>
   );
