@@ -1,5 +1,5 @@
-// API service for Streamed.pk API
-const BASE_URL = 'https://streamed.pk/api';
+// API service for f1naveenraj.naveenrajultd.workers.dev API
+const BASE_URL = 'https://f1naveenraj.naveenrajultd.workers.dev/api';
 
 class StreamedAPI {
   // Check if a stream URL is available (simplified version)
@@ -358,7 +358,7 @@ class StreamedAPI {
   // Get image URL for team badges or event posters
   getImageUrl(imagePath) {
     if (!imagePath) return null;
-    return `https://streamed.pk/api/images/${imagePath}`;
+    return `https://f1naveenraj.naveenrajultd.workers.dev/api/images/${imagePath}`;
   }
 
   // Format date for display
