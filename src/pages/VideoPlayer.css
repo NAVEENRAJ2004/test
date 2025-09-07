@@ -830,3 +830,93 @@
 .quality-badge:hover, .record-badge:hover, .championship-badge:hover {
   animation: badgeGlow 2s infinite;
 }
+
+/* Iframe Loading and Error States */
+.iframe-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.iframe-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 10;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top: 3px solid #ff1744;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.iframe-loading p {
+  color: #ffffff;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.iframe-error {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 10;
+  text-align: center;
+  padding: 20px;
+}
+
+.iframe-error .error-icon {
+  font-size: 3rem;
+  margin-bottom: 15px;
+}
+
+.iframe-error h3 {
+  color: #ffffff;
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.iframe-error p {
+  color: #b0b0b0;
+  margin-bottom: 20px;
+}
+
+.retry-btn {
+  background: #ff1744;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.retry-btn:hover {
+  background: #d50000;
+  transform: translateY(-2px);
+}

@@ -1,5 +1,5 @@
-// API service for f1naveenraj.naveenrajultd.workers.dev API
-const BASE_URL = 'https://f1naveenraj.naveenrajultd.workers.dev/api';
+// API service for api.naveenraj30.me API
+const BASE_URL = 'https://api.naveenraj30.me/api';
 
 class StreamedAPI {
   // Enhanced F1 filtering function with comprehensive keywords
@@ -930,7 +930,7 @@ class StreamedAPI {
   // Get image URL for team badges or event posters
   getImageUrl(imagePath) {
     if (!imagePath) return null;
-    return `https://f1naveenraj.naveenrajultd.workers.dev/api/images/${imagePath}`;
+    return `https://api.naveenraj30.me/api/images/${imagePath}`;
   }
 
   // Format date for display
