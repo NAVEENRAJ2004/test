@@ -27,6 +27,74 @@ class StreamedAPI {
     );
   }
 
+  // Enhanced Cricket filtering function with comprehensive keywords
+  isCricketMatch(match) {
+    return (
+      // Category checks
+      match.category === 'cricket' ||
+      match.category === 'ipl' ||
+      match.category === 'test' ||
+      match.category === 'odi' ||
+      match.category === 't20' ||
+      match.category === 't20i' ||
+      match.category === 'asia cup' ||
+      match.category === 'world cup' ||
+      match.category === 'champions trophy' ||
+      match.category === 'wt20' ||
+      match.category === 'bbl' ||
+      match.category === 'cpl' ||
+      match.category === 'psl' ||
+      match.category === 'county' ||
+      
+      // Title checks - general cricket terms
+      match.title.toLowerCase().includes('cricket') ||
+      match.title.toLowerCase().includes('ipl') ||
+      match.title.toLowerCase().includes('test match') ||
+      match.title.toLowerCase().includes('one day') ||
+      match.title.toLowerCase().includes('t20') ||
+      match.title.toLowerCase().includes('twenty20') ||
+      match.title.toLowerCase().includes('asia cup') ||
+      match.title.toLowerCase().includes('world cup cricket') ||
+      match.title.toLowerCase().includes('champions trophy') ||
+      match.title.toLowerCase().includes('big bash') ||
+      match.title.toLowerCase().includes('caribbean premier') ||
+      match.title.toLowerCase().includes('pakistan super league') ||
+      match.title.toLowerCase().includes('county championship') ||
+      match.title.toLowerCase().includes('ranji trophy') ||
+      match.title.toLowerCase().includes('vijay hazare') ||
+      match.title.toLowerCase().includes('syed mushtaq') ||
+      
+      // Team names that indicate cricket
+      match.title.toLowerCase().includes('vs') && (
+        match.title.toLowerCase().includes('india') ||
+        match.title.toLowerCase().includes('pakistan') ||
+        match.title.toLowerCase().includes('australia') ||
+        match.title.toLowerCase().includes('england') ||
+        match.title.toLowerCase().includes('south africa') ||
+        match.title.toLowerCase().includes('new zealand') ||
+        match.title.toLowerCase().includes('sri lanka') ||
+        match.title.toLowerCase().includes('bangladesh') ||
+        match.title.toLowerCase().includes('afghanistan') ||
+        match.title.toLowerCase().includes('west indies') ||
+        match.title.toLowerCase().includes('zimbabwe') ||
+        match.title.toLowerCase().includes('ireland') ||
+        match.title.toLowerCase().includes('netherlands')
+      )
+    );
+  }
+
+  // Asia Cup specific filtering function
+  isAsiaCupMatch(match) {
+    return (
+      match.category === 'asia cup' ||
+      match.category === 'asiacup' ||
+      match.title.toLowerCase().includes('asia cup') ||
+      match.title.toLowerCase().includes('asian cup cricket') ||
+      match.series?.toLowerCase().includes('asia cup') ||
+      (match.tournament && match.tournament.toLowerCase().includes('asia cup'))
+    );
+  }
+
   // Check if a stream URL is available (simplified version)
   async checkStreamAvailability(source, id) {
     try {
@@ -723,19 +791,8 @@ class StreamedAPI {
         return await this.validateCricketStreams(sampleMatches);
       }
       const allLive = await response.json();
-      // Filter for Cricket matches only
-      const cricketLive = allLive.filter(match => 
-        match.category === 'cricket' || 
-        match.category === 'ipl' || 
-        match.category === 'test' ||
-        match.category === 'odi' ||
-        match.category === 't20' ||
-        match.title.toLowerCase().includes('cricket') ||
-        match.title.toLowerCase().includes('ipl') ||
-        match.title.toLowerCase().includes('test') ||
-        match.title.toLowerCase().includes('odi') ||
-        match.title.toLowerCase().includes('t20')
-      );
+      // Filter for Cricket matches only using enhanced filter
+      const cricketLive = allLive.filter(match => this.isCricketMatch(match));
       
       if (cricketLive.length === 0) {
         const sampleMatches = this.getSampleLiveCricket();
@@ -761,11 +818,107 @@ class StreamedAPI {
   // Get upcoming Cricket matches
   async getUpcomingCricketMatches() {
     try {
-      // For now, return sample upcoming matches
+      const response = await fetch(`${BASE_URL}/matches/upcoming`);
+      if (response.ok) {
+        const allUpcoming = await response.json();
+        const cricketUpcoming = allUpcoming.filter(match => this.isCricketMatch(match));
+        if (cricketUpcoming.length > 0) {
+          return cricketUpcoming;
+        }
+      }
+      // Fallback to sample upcoming matches
       return this.getSampleUpcomingCricket();
     } catch (error) {
       console.error('Error fetching upcoming Cricket matches:', error);
       return this.getSampleUpcomingCricket();
+    }
+  }
+
+  // Get live Asia Cup matches specifically
+  async getLiveAsiaCupMatches() {
+    try {
+      const response = await fetch(`${BASE_URL}/matches/live`);
+      if (!response.ok) {
+        const sampleMatches = this.getSampleAsiaCupData();
+        return await this.validateCricketStreams(sampleMatches.filter(m => m.status === 'live'));
+      }
+      const allLive = await response.json();
+      // Filter for Asia Cup matches specifically
+      const asiaCupLive = allLive.filter(match => this.isAsiaCupMatch(match));
+      
+      if (asiaCupLive.length === 0) {
+        const sampleMatches = this.getSampleAsiaCupData();
+        return await this.validateCricketStreams(sampleMatches.filter(m => m.status === 'live'));
+      }
+      
+      return await this.validateCricketStreams(asiaCupLive);
+    } catch (error) {
+      console.error('Error fetching live Asia Cup matches:', error);
+      const sampleMatches = this.getSampleAsiaCupData();
+      return sampleMatches.filter(m => m.status === 'live');
+    }
+  }
+
+  // Get upcoming Asia Cup matches
+  async getUpcomingAsiaCupMatches() {
+    try {
+      const response = await fetch(`${BASE_URL}/matches/upcoming`);
+      if (response.ok) {
+        const allUpcoming = await response.json();
+        const asiaCupUpcoming = allUpcoming.filter(match => this.isAsiaCupMatch(match));
+        if (asiaCupUpcoming.length > 0) {
+          return asiaCupUpcoming;
+        }
+      }
+      // Fallback to sample upcoming Asia Cup matches
+      const sampleMatches = this.getSampleAsiaCupData();
+      return sampleMatches.filter(m => m.status === 'upcoming');
+    } catch (error) {
+      console.error('Error fetching upcoming Asia Cup matches:', error);
+      const sampleMatches = this.getSampleAsiaCupData();
+      return sampleMatches.filter(m => m.status === 'upcoming');
+    }
+  }
+
+  // Get all Asia Cup matches (live and upcoming)
+  async getAllAsiaCupMatches() {
+    try {
+      const [liveMatches, upcomingMatches] = await Promise.all([
+        this.getLiveAsiaCupMatches(),
+        this.getUpcomingAsiaCupMatches()
+      ]);
+      
+      return [...liveMatches, ...upcomingMatches];
+    } catch (error) {
+      console.error('Error fetching all Asia Cup matches:', error);
+      return this.getSampleAsiaCupData();
+    }
+  }
+
+  // Get cricket matches by tournament/series
+  async getCricketMatchesByTournament(tournament) {
+    try {
+      const response = await fetch(`${BASE_URL}/matches/all`);
+      if (!response.ok) {
+        return this.getSampleCricketData().filter(match => 
+          match.series?.toLowerCase().includes(tournament.toLowerCase()) ||
+          match.tournament?.toLowerCase().includes(tournament.toLowerCase())
+        );
+      }
+      
+      const allMatches = await response.json();
+      const tournamentMatches = allMatches.filter(match => 
+        this.isCricketMatch(match) && (
+          match.series?.toLowerCase().includes(tournament.toLowerCase()) ||
+          match.tournament?.toLowerCase().includes(tournament.toLowerCase()) ||
+          match.title.toLowerCase().includes(tournament.toLowerCase())
+        )
+      );
+      
+      return tournamentMatches;
+    } catch (error) {
+      console.error(`Error fetching ${tournament} matches:`, error);
+      return [];
     }
   }
 
@@ -910,6 +1063,199 @@ class StreamedAPI {
   // Get sample upcoming cricket matches
   getSampleUpcomingCricket() {
     const allMatches = this.getSampleCricketData();
+    return allMatches.filter(match => match.status === 'upcoming');
+  }
+
+  // Get sample Asia Cup data specifically
+  getSampleAsiaCupData() {
+    const now = new Date();
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const dayAfter = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+    const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    
+    return [
+      {
+        id: 'asia-cup-1',
+        title: "India vs Pakistan - Asia Cup 2024 Super 4",
+        series: "Asia Cup 2024",
+        tournament: "Asia Cup",
+        format: "ODI",
+        venue: "R.Premadasa Stadium, Colombo",
+        teams: {
+          team1: "India",
+          team2: "Pakistan",
+          home: "India",
+          away: "Pakistan"
+        },
+        score: {
+          home: "348/8 (50 overs)",
+          away: "128/4 (25.3 overs)"
+        },
+        time: new Date(now.getTime() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
+        status: "live",
+        category: "asia cup",
+        weather: {
+          condition: 'Partly Cloudy',
+          temperature: '28°C',
+          humidity: '78%'
+        },
+        sources: [
+          { 
+            source: 'cricket1', 
+            id: 'ind-vs-pak-asia-cup-live',
+            quality: 'HD 1080p',
+            language: 'English'
+          },
+          { 
+            source: 'sports2', 
+            id: 'asia-cup-ind-pak-super4',
+            quality: 'HD 720p',
+            language: 'Hindi'
+          }
+        ]
+      },
+      {
+        id: 'asia-cup-2',
+        title: "Sri Lanka vs Bangladesh - Asia Cup 2024 Super 4",
+        series: "Asia Cup 2024",
+        tournament: "Asia Cup",
+        format: "ODI",
+        venue: "Galle International Stadium, Sri Lanka",
+        teams: {
+          team1: "Sri Lanka",
+          team2: "Bangladesh",
+          home: "Sri Lanka",
+          away: "Bangladesh"
+        },
+        score: {
+          home: "275/9 (50 overs)",
+          away: "198/6 (35.2 overs)"
+        },
+        time: new Date(now.getTime() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
+        status: "live",
+        category: "asia cup",
+        weather: {
+          condition: 'Sunny',
+          temperature: '31°C',
+          humidity: '65%'
+        },
+        sources: [
+          { 
+            source: 'cricket3', 
+            id: 'sl-vs-ban-asia-cup-live',
+            quality: 'HD 1080p',
+            language: 'English'
+          }
+        ]
+      },
+      {
+        id: 'asia-cup-3',
+        title: "Afghanistan vs Nepal - Asia Cup 2024 Group A",
+        series: "Asia Cup 2024",
+        tournament: "Asia Cup",
+        format: "ODI",
+        venue: "Mulpani Cricket Ground, Kathmandu",
+        teams: {
+          team1: "Afghanistan",
+          team2: "Nepal",
+          home: "Afghanistan",
+          away: "Nepal"
+        },
+        time: tomorrow.setHours(14, 30, 0, 0), // Tomorrow 2:30 PM
+        status: "upcoming",
+        category: "asia cup",
+        weather: {
+          condition: 'Clear',
+          temperature: '25°C',
+          humidity: '45%'
+        },
+        sources: [
+          { 
+            source: 'cricket4', 
+            id: 'afg-vs-nep-asia-cup',
+            quality: 'HD 720p',
+            language: 'English'
+          }
+        ]
+      },
+      {
+        id: 'asia-cup-4',
+        title: "India vs Sri Lanka - Asia Cup 2024 Final",
+        series: "Asia Cup 2024",
+        tournament: "Asia Cup",
+        format: "ODI",
+        venue: "R.Premadasa Stadium, Colombo",
+        teams: {
+          team1: "India",
+          team2: "Sri Lanka",
+          home: "India",
+          away: "Sri Lanka"
+        },
+        time: dayAfter.setHours(19, 30, 0, 0), // Day after tomorrow 7:30 PM
+        status: "upcoming",
+        category: "asia cup",
+        weather: {
+          condition: 'Partly Cloudy',
+          temperature: '29°C',
+          humidity: '70%'
+        },
+        sources: [
+          { 
+            source: 'cricket1', 
+            id: 'ind-vs-sl-asia-cup-final',
+            quality: 'HD 1080p',
+            language: 'English'
+          },
+          { 
+            source: 'sports1', 
+            id: 'asia-cup-final-2024',
+            quality: 'HD 1080p',
+            language: 'Hindi'
+          }
+        ]
+      },
+      {
+        id: 'asia-cup-5',
+        title: "Pakistan vs Bangladesh - Asia Cup 2024 3rd Place Playoff",
+        series: "Asia Cup 2024",
+        tournament: "Asia Cup",
+        format: "ODI",
+        venue: "Galle International Stadium, Sri Lanka",
+        teams: {
+          team1: "Pakistan",
+          team2: "Bangladesh",
+          home: "Pakistan",
+          away: "Bangladesh"
+        },
+        time: nextWeek.setHours(14, 0, 0, 0), // Next week 2:00 PM
+        status: "upcoming",
+        category: "asia cup",
+        weather: {
+          condition: 'Sunny',
+          temperature: '32°C',
+          humidity: '60%'
+        },
+        sources: [
+          { 
+            source: 'cricket5', 
+            id: 'pak-vs-ban-asia-cup-playoff',
+            quality: 'HD 720p',
+            language: 'English'
+          }
+        ]
+      }
+    ];
+  }
+
+  // Get sample live Asia Cup matches only
+  getSampleLiveAsiaCup() {
+    const allMatches = this.getSampleAsiaCupData();
+    return allMatches.filter(match => match.status === 'live');
+  }
+
+  // Get sample upcoming Asia Cup matches
+  getSampleUpcomingAsiaCup() {
+    const allMatches = this.getSampleAsiaCupData();
     return allMatches.filter(match => match.status === 'upcoming');
   }
 

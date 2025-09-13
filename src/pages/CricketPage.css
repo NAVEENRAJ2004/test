@@ -48,11 +48,16 @@
   100% { opacity: 1; }
 }
 
+.filter-container {
+  margin-bottom: 2rem;
+}
+
 .filter-tabs {
   display: flex;
   justify-content: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
 }
 
 .filter-tab {
@@ -68,6 +73,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-size: 0.9rem;
 }
 
 .filter-tab:hover {
@@ -92,6 +98,31 @@
 
 .filter-tab.active .filter-count {
   background: #2E8B57;
+}
+
+.tournament-filter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  font-weight: 600;
+}
+
+.tournament-select {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #2E8B57;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+}
+
+.tournament-select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
 }
 
 .loading {
@@ -244,6 +275,14 @@
   flex: 1;
 }
 
+.match-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-left: 1rem;
+  flex-shrink: 0;
+}
+
 .live-badge {
   display: flex;
   align-items: center;
@@ -253,14 +292,42 @@
   border-radius: 15px;
   font-size: 0.8rem;
   font-weight: bold;
-  margin-left: 1rem;
-  flex-shrink: 0;
 }
 
 .live-badge .live-dot {
   width: 6px;
   height: 6px;
   margin-right: 0.3rem;
+}
+
+.tournament-badge {
+  display: flex;
+  align-items: center;
+  padding: 0.3rem 0.8rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: white;
+}
+
+.tournament-badge.asia-cup {
+  background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+}
+
+.tournament-badge.ipl {
+  background: linear-gradient(135deg, #1E3C72 0%, #2A5298 100%);
+}
+
+.format-badge {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.2);
+  color: #333;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  backdrop-filter: blur(5px);
 }
 
 .match-teams {
@@ -327,6 +394,22 @@
   text-align: right;
   max-width: 60%;
   word-wrap: break-word;
+}
+
+.weather-info {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0.5rem;
+  margin: 0.5rem 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.weather-info .info-label {
+  color: #87CEEB;
+}
+
+.weather-info .info-value {
+  font-size: 0.9rem;
 }
 
 .match-actions {

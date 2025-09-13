@@ -21,6 +21,18 @@ const Navbar = () => {
           >
             🏎️ Formula 1
           </Link>
+          <Link 
+            to="/cricket" 
+            className={`navbar-item ${location.pathname === '/cricket' ? 'active' : ''}`}
+          >
+            🏏 Cricket
+          </Link>
+          <Link 
+            to="/basketball" 
+            className={`navbar-item ${location.pathname === '/basketball' ? 'active' : ''}`}
+          >
+            🏀 Basketball
+          </Link>
         </div>
       </div>
     </nav>

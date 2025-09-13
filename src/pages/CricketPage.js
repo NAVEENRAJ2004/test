@@ -9,7 +9,8 @@ const CricketPage = () => {
   const [loading, setLoading] = useState(true);
   const [validating, setValidating] = useState(false);
   const [error, setError] = useState(null);
-  const [filter, setFilter] = useState('live'); // 'live', 'upcoming'
+  const [filter, setFilter] = useState('live'); // 'live', 'upcoming', 'asia-cup', 'asia-cup-live', 'asia-cup-upcoming'
+  const [selectedTournament, setSelectedTournament] = useState('all'); // 'all', 'ipl', 'asia-cup', 'world-cup'
 
   useEffect(() => {
     const fetchMatches = async () => {
@@ -26,12 +27,31 @@ const CricketPage = () => {
           setValidating(false);
         } else if (filter === 'upcoming') {
           data = await api.getUpcomingCricketMatches();
+        } else if (filter === 'asia-cup') {
+          data = await api.getAllAsiaCupMatches();
+        } else if (filter === 'asia-cup-live') {
+          setValidating(true);
+          console.log('Fetching and validating live Asia Cup matches...');
+          data = await api.getLiveAsiaCupMatches();
+          console.log(`Found ${data.length} validated live Asia Cup matches`);
+          setValidating(false);
+        } else if (filter === 'asia-cup-upcoming') {
+          data = await api.getUpcomingAsiaCupMatches();
+        }
+
+        // Filter by tournament if not 'all'
+        if (selectedTournament !== 'all' && selectedTournament !== filter) {
+          data = data.filter(match => 
+            match.series?.toLowerCase().includes(selectedTournament) ||
+            match.tournament?.toLowerCase().includes(selectedTournament) ||
+            match.category?.toLowerCase().includes(selectedTournament)
+          );
         }
         
         setMatches(data);
         
         // Also get live matches for the live indicator
-        if (filter !== 'live') {
+        if (!filter.includes('live')) {
           const live = await api.getLiveCricketMatches();
           setLiveMatches(live);
         } else {
@@ -47,7 +67,7 @@ const CricketPage = () => {
     };
 
     fetchMatches();
-  }, [filter]);
+  }, [filter, selectedTournament]);
 
   const handleWatchClick = (match) => {
     if (!match.sources || match.sources.length === 0) {
@@ -125,22 +145,62 @@ const CricketPage = () => {
         )}
       </div>
 
-      <div className="filter-tabs">
-        <button 
-          className={`filter-tab ${filter === 'live' ? 'active' : ''}`}
-          onClick={() => setFilter('live')}
-        >
-          🔴 Live
-          {liveMatches.length > 0 && (
-            <span className="filter-count">{liveMatches.length}</span>
-          )}
-        </button>
-        <button 
-          className={`filter-tab ${filter === 'upcoming' ? 'active' : ''}`}
-          onClick={() => setFilter('upcoming')}
-        >
-          📅 Upcoming
-        </button>
+      <div className="filter-container">
+        <div className="filter-tabs">
+          <button 
+            className={`filter-tab ${filter === 'live' ? 'active' : ''}`}
+            onClick={() => setFilter('live')}
+          >
+            🔴 Live
+            {liveMatches.length > 0 && (
+              <span className="filter-count">{liveMatches.length}</span>
+            )}
+          </button>
+          <button 
+            className={`filter-tab ${filter === 'upcoming' ? 'active' : ''}`}
+            onClick={() => setFilter('upcoming')}
+          >
+            📅 Upcoming
+          </button>
+          <button 
+            className={`filter-tab ${filter === 'asia-cup' ? 'active' : ''}`}
+            onClick={() => setFilter('asia-cup')}
+          >
+            🏆 Asia Cup
+          </button>
+          <button 
+            className={`filter-tab ${filter === 'asia-cup-live' ? 'active' : ''}`}
+            onClick={() => setFilter('asia-cup-live')}
+          >
+            🔴 Asia Cup Live
+          </button>
+          <button 
+            className={`filter-tab ${filter === 'asia-cup-upcoming' ? 'active' : ''}`}
+            onClick={() => setFilter('asia-cup-upcoming')}
+          >
+            📅 Asia Cup Upcoming
+          </button>
+        </div>
+
+        <div className="tournament-filter">
+          <label htmlFor="tournament-select">Tournament:</label>
+          <select 
+            id="tournament-select"
+            value={selectedTournament} 
+            onChange={(e) => setSelectedTournament(e.target.value)}
+            className="tournament-select"
+          >
+            <option value="all">All Tournaments</option>
+            <option value="ipl">IPL</option>
+            <option value="asia cup">Asia Cup</option>
+            <option value="world cup">World Cup</option>
+            <option value="test">Test Series</option>
+            <option value="odi">ODI Series</option>
+            <option value="t20">T20 Series</option>
+            <option value="big bash">Big Bash League</option>
+            <option value="caribbean premier">Caribbean Premier League</option>
+          </select>
+        </div>
       </div>
 
       {matches.length === 0 ? (
@@ -164,12 +224,29 @@ const CricketPage = () => {
             <div key={index} className="match-card">
               <div className="match-header">
                 <h3 className="match-title">{match.title}</h3>
-                {filter === 'live' && (
-                  <div className="live-badge">
-                    <span className="live-dot"></span>
-                    LIVE
-                  </div>
-                )}
+                <div className="match-badges">
+                  {(filter.includes('live') || match.status === 'live') && (
+                    <div className="live-badge">
+                      <span className="live-dot"></span>
+                      LIVE
+                    </div>
+                  )}
+                  {match.category === 'asia cup' && (
+                    <div className="tournament-badge asia-cup">
+                      🏆 Asia Cup
+                    </div>
+                  )}
+                  {match.series?.toLowerCase().includes('ipl') && (
+                    <div className="tournament-badge ipl">
+                      🏏 IPL
+                    </div>
+                  )}
+                  {match.format && (
+                    <div className="format-badge">
+                      {match.format}
+                    </div>
+                  )}
+                </div>
               </div>
               
               {match.teams && (
@@ -207,6 +284,13 @@ const CricketPage = () => {
                     <span className="info-value">{match.series}</span>
                   </div>
                 )}
+
+                {match.tournament && (
+                  <div className="match-info">
+                    <span className="info-label">Tournament:</span>
+                    <span className="info-value">{match.tournament}</span>
+                  </div>
+                )}
                 
                 {match.format && (
                   <div className="match-info">
@@ -226,6 +310,16 @@ const CricketPage = () => {
                   <div className="match-info">
                     <span className="info-label">Time:</span>
                     <span className="info-value">{formatMatchTime(match.time)}</span>
+                  </div>
+                )}
+
+                {match.weather && (
+                  <div className="match-info weather-info">
+                    <span className="info-label">Weather:</span>
+                    <span className="info-value">
+                      {match.weather.condition} • {match.weather.temperature}
+                      {match.weather.humidity && ` • ${match.weather.humidity} humidity`}
+                    </span>
                   </div>
                 )}
                 
