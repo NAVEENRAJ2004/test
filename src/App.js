@@ -7,6 +7,7 @@ import F1Page from './pages/F1Page';
 import CricketPage from './pages/CricketPage';
 import BasketballPage from './pages/BasketballPage';
 import VideoPlayer from './pages/VideoPlayer';
+import WedzHLSDemo from './pages/WedzHLSDemo';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
             <Route path="/cricket" element={<CricketPage />} />
             <Route path="/basketball" element={<BasketballPage />} />
             <Route path="/player/:source/:id" element={<VideoPlayer />} />
+            <Route path="/wedzthlsdemo" element={<WedzHLSDemo />} />
           </Routes>
         </main>
       </div>
