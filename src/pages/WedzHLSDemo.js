@@ -13,7 +13,7 @@ const WedzHLSDemo = () => {
   const [showQualityMenu, setShowQualityMenu] = useState(false);
 
   // HLS stream URL for internal testing
-  const streamUrl = 'https://pub-10ca6c07ebc141c8ba1ea976882f26b0.r2.dev/wedzat-internal-testing/37665b5a-570c-4cb4-83b8-2be6350496de/master.m3u8';
+  const streamUrl = 'https://pub-10ca6c07ebc141c8ba1ea976882f26b0.r2.dev/wedzat-internal-testing/8c338868-2f5b-45a0-aba4-1877d5b5c729/master.m3u8';
 
   useEffect(() => {
     const video = videoRef.current;
