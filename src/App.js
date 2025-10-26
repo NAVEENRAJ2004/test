@@ -21,7 +21,7 @@ function App() {
             <Route path="/cricket" element={<CricketPage />} />
             <Route path="/basketball" element={<BasketballPage />} />
             <Route path="/player/:source/:id" element={<VideoPlayer />} />
-            <Route path="/wedzthlsdemo" element={<WedzHLSDemo />} />
+            <Route path="/wedzathlsdemo" element={<WedzHLSDemo />} />
           </Routes>
         </main>
       </div>
