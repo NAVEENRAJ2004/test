@@ -5,20 +5,59 @@ import './WedzHLSDemo.css';
 const WedzHLSDemo = () => {
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [playlists, setPlaylists] = useState([]);
+  const [selectedStream, setSelectedStream] = useState('');
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [qualityLevels, setQualityLevels] = useState([]);
   const [currentQuality, setCurrentQuality] = useState(-1);
   const [showQualityMenu, setShowQualityMenu] = useState(false);
 
-  // HLS stream URL for internal testing
-  const streamUrl = 'https://pub-10ca6c07ebc141c8ba1ea976882f26b0.r2.dev/wedzat-internal-testing/8c338868-2f5b-45a0-aba4-1877d5b5c729/master.m3u8';
-
+  // Fetch HLS playlists from API
   useEffect(() => {
+    const fetchPlaylists = async () => {
+      try {
+        setLoading(true);
+        console.log('Fetching playlists...');
+        const response = await fetch('https://dev-api.wedzat.com/hub/master-playlists');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Fetched playlists:', data);
+        
+        setPlaylists(data);
+        
+        // Set the first stream as default
+        if (data && data.length > 0) {
+          setSelectedStream(data[0]);
+        }
+        
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching playlists:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPlaylists();
+  }, []);
+
+  // Initialize HLS.js player when stream is selected
+  useEffect(() => {
+    if (!selectedStream || !videoRef.current) return;
+
     const video = videoRef.current;
-    
-    if (!video) return;
+
+    // Dispose existing HLS instance
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
+    }
 
     // Check if HLS is supported
     if (Hls.isSupported()) {
@@ -30,11 +69,10 @@ const WedzHLSDemo = () => {
       
       hlsRef.current = hls;
 
-      hls.loadSource(streamUrl);
+      hls.loadSource(selectedStream);
       hls.attachMedia(video);
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        setIsLoading(false);
         console.log('HLS manifest loaded, found ' + hls.levels.length + ' quality level(s)');
         
         // Set up quality levels
@@ -75,54 +113,30 @@ const WedzHLSDemo = () => {
 
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       // For Safari which has native HLS support
-      video.src = streamUrl;
-      video.addEventListener('loadedmetadata', () => {
-        setIsLoading(false);
-      });
+      video.src = selectedStream;
     } else {
       setError('HLS is not supported in this browser');
-      setIsLoading(false);
     }
 
-    // Video event listeners
-    const handlePlay = () => setIsPlaying(true);
-    const handlePause = () => setIsPlaying(false);
-    const handleError = () => setError('Video playback error');
+    console.log('HLS.js player initialized with stream:', selectedStream);
 
-    video.addEventListener('play', handlePlay);
-    video.addEventListener('pause', handlePause);
-    video.addEventListener('error', handleError);
-
+    // Cleanup function
     return () => {
       if (hlsRef.current) {
         hlsRef.current.destroy();
+        hlsRef.current = null;
       }
-      video.removeEventListener('play', handlePlay);
-      video.removeEventListener('pause', handlePause);
-      video.removeEventListener('error', handleError);
     };
-  }, []);
+  }, [selectedStream]);
 
-  const togglePlayPause = () => {
-    const video = videoRef.current;
-    if (video) {
-      if (video.paused) {
-        video.play();
-      } else {
-        video.pause();
-      }
-    }
+  const handleStreamChange = (event) => {
+    setSelectedStream(event.target.value);
   };
 
-  const toggleFullscreen = () => {
-    const video = videoRef.current;
-    if (video) {
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
-      } else {
-        video.requestFullscreen();
-      }
-    }
+  const getStreamName = (streamUrl) => {
+    const parts = streamUrl.split('/');
+    const folder = parts[parts.length - 2];
+    return `Stream - ${folder}`;
   };
 
   const changeQuality = (levelIndex) => {
@@ -143,104 +157,113 @@ const WedzHLSDemo = () => {
     return level ? level.name : 'Auto';
   };
 
-  return (
-    <div className="wedz-hls-demo">
-      <div className="demo-header">
-        <h1>Wedzat HLS Video Player Demo</h1>
-        <p>Internal Testing Stream</p>
+  if (loading) {
+    return (
+      <div className="video-player-container">
+        <h2>HLS Video Player</h2>
+        <div className="loading-message">
+          <p>Loading playlists from API...</p>
+          <div className="spinner"></div>
+        </div>
       </div>
+    );
+  }
 
-      <div className="video-container">
-        {isLoading && (
-          <div className="loading-overlay">
-            <div className="spinner"></div>
-            <p>Loading stream...</p>
-          </div>
-        )}
+  if (error) {
+    return (
+      <div className="video-player-container">
+        <h2>HLS Video Player</h2>
+        <div className="error-message">
+          <p>Error loading playlists: {error}</p>
+          <button onClick={() => window.location.reload()}>Retry</button>
+        </div>
+      </div>
+    );
+  }
 
-        {error && (
-          <div className="error-overlay">
-            <div className="error-message">
-              <h3>Playback Error</h3>
-              <p>{error}</p>
-              <button onClick={() => window.location.reload()}>Retry</button>
-            </div>
-          </div>
-        )}
-
-        <video
-          ref={videoRef}
-          controls
-          autoPlay={false}
-          muted={false}
-          playsInline
-          className="hls-video"
-          poster=""
-        />
-
-        {/* Overlay controls only for quality selection */}
-        <div className="video-overlay-controls">
-          <div className="quality-selector-overlay">
-            <button 
-              className="quality-btn-overlay"
-              onClick={toggleQualityMenu}
-              disabled={isLoading || error}
-              title="Video Quality Settings"
-            >
-              <span className="quality-icon">HD</span>
-              <span className="quality-text">{getCurrentQualityName()}</span>
-            </button>
+  return (
+    <div className="video-player-container">
+      <h2>HLS Video Player - Wedzat Streams</h2>
+      
+      {playlists.length > 0 && (
+        <div className="stream-selector">
+          <label htmlFor="stream-select">Select Stream ({playlists.length} available): </label>
+          <select 
+            id="stream-select" 
+            value={selectedStream} 
+            onChange={handleStreamChange}
+            className="stream-dropdown"
+          >
+            {playlists.map((stream, index) => (
+              <option key={index} value={stream}>
+                {getStreamName(stream)}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      
+      {selectedStream && (
+        <div className="video-wrapper">
+          <div className="video-container">
+            <video
+              ref={videoRef}
+              controls
+              autoPlay={false}
+              muted={false}
+              playsInline
+              className="hls-video"
+              width="100%"
+              height="400"
+            />
             
-            {showQualityMenu && (
-              <div className="quality-menu-overlay">
-                <div className="quality-header">Select Quality</div>
-                <div 
-                  className={`quality-option ${currentQuality === -1 ? 'active' : ''}`}
-                  onClick={() => changeQuality(-1)}
+            {/* Quality selector overlay */}
+            {qualityLevels.length > 0 && (
+              <div className="quality-selector-overlay">
+                <button 
+                  className="quality-btn"
+                  onClick={toggleQualityMenu}
+                  title="Video Quality Settings"
                 >
-                  <span>🔄 Auto</span>
-                  <small>Adaptive</small>
-                </div>
-                {qualityLevels.length > 0 ? (
-                  qualityLevels.map((level) => (
+                  <span className="quality-icon">HD</span>
+                  <span className="quality-text">{getCurrentQualityName()}</span>
+                </button>
+                
+                {showQualityMenu && (
+                  <div className="quality-menu">
+                    <div className="quality-header">Select Quality</div>
                     <div 
-                      key={level.index}
-                      className={`quality-option ${currentQuality === level.index ? 'active' : ''}`}
-                      onClick={() => changeQuality(level.index)}
+                      className={`quality-option ${currentQuality === -1 ? 'active' : ''}`}
+                      onClick={() => changeQuality(-1)}
                     >
-                      <span>{level.name}</span>
-                      <small>{Math.round(level.bitrate / 1000)}k</small>
+                      <span>🔄 Auto</span>
+                      <small>Adaptive</small>
                     </div>
-                  ))
-                ) : (
-                  <div className="quality-option disabled">
-                    <span>No quality levels detected</span>
-                    <small>Stream may not be loaded yet</small>
+                    {qualityLevels.map((level) => (
+                      <div 
+                        key={level.index}
+                        className={`quality-option ${currentQuality === level.index ? 'active' : ''}`}
+                        onClick={() => changeQuality(level.index)}
+                      >
+                        <span>{level.name}</span>
+                        <small>{Math.round(level.bitrate / 1000)}k</small>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
             )}
           </div>
         </div>
-      </div>
-
-      <div className="demo-info">
-        <h3>Stream Information</h3>
-        <div className="info-grid">
-          <div className="info-item">
-            <strong>Format:</strong> HLS (HTTP Live Streaming)
-          </div>
-          <div className="info-item">
-            <strong>Player:</strong> HLS.js
-          </div>
-          <div className="info-item">
-            <strong>Status:</strong> Internal Testing
-          </div>
-          <div className="info-item">
-            <strong>URL:</strong> 
-            <code>{streamUrl}</code>
-          </div>
-        </div>
+      )}
+      
+      <div className="stream-info">
+        <h3>Current Stream Info:</h3>
+        <p><strong>URL:</strong> <code>{selectedStream}</code></p>
+        <p><strong>Total Streams:</strong> {playlists.length}</p>
+        {qualityLevels.length > 0 && (
+          <p><strong>Quality Levels:</strong> {qualityLevels.length} available</p>
+        )}
       </div>
     </div>
   );
